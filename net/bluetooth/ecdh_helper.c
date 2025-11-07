@@ -125,10 +125,7 @@ int set_ecdh_privkey(struct crypto_kpp *tfm, const u8 private_key[32])
 	if (err)
 		goto free_all;
 
-	printk("encoded private key!");
-
 	err = crypto_kpp_set_secret(tfm, buf, buf_len);
-	printk("crypto_kpp_set_secret called, result is %d", err);
 
 	/* fall through */
 free_all:
@@ -171,13 +168,10 @@ int generate_ecdh_public_key(struct crypto_kpp *tfm, u8 public_key[64])
 				 crypto_req_done, &result);
 
 	err = crypto_kpp_generate_public_key(req);
-	printk("crypto_kpp_generate_public_key called, result is %d", err);
 
 	err = crypto_wait_req(err, &result);
 	if (err < 0)
 		goto free_all;
-
-	printk("are we here yet");
 
 	/* The public key is handed back in little endian as expected by
 	 * the Security Manager Protocol.
@@ -203,12 +197,9 @@ int generate_ecdh_keys(struct crypto_kpp *tfm, u8 public_key[64])
 {
 	int err;
 
-	printk("Starting ecdh key generation");
 	err = set_ecdh_privkey(tfm, NULL);
 	if (err)
 		return err;
-
-	printk("Set ecdh privkey!");
 
 	return generate_ecdh_public_key(tfm, public_key);
 }

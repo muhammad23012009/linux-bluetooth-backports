@@ -1225,8 +1225,6 @@ static u8 hci_cc_le_read_local_features(struct hci_dev *hdev, void *data,
 
 	memcpy(hdev->le_features, rp->features, 8);
 
-	printk("Got Bluetooth features! %lx", hdev->le_features);
-
 	return rp->status;
 }
 

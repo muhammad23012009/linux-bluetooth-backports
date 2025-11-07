@@ -44,7 +44,6 @@
  * accidentally in dmesg, i.e. the values of the various crypto keys
  * and the inputs & outputs of crypto functions.
  */
-#define DEBUG
 #ifdef DEBUG
 #define SMP_DBG(fmt, ...) printk(KERN_DEBUG "%s: " fmt, __func__, \
 				 ##__VA_ARGS__)
@@ -972,8 +971,6 @@ static u8 smp_confirm(struct smp_chan *smp)
 	else
 		SMP_ALLOW_CMD(smp, SMP_CMD_PAIRING_RANDOM);
 
-	printk("looks good?");
-
 	return 0;
 }
 
@@ -1753,8 +1750,6 @@ static u8 smp_cmd_pairing_req(struct l2cap_conn *conn, struct sk_buff *skb)
 
 	bt_dev_dbg(hdev, "conn %p", conn);
 
-	printk("Initiating SMP pairing!");
-
 	if (skb->len < sizeof(*req))
 		return SMP_INVALID_PARAMS;
 
@@ -1820,14 +1815,11 @@ static u8 smp_cmd_pairing_req(struct l2cap_conn *conn, struct sk_buff *skb)
 	build_pairing_cmd(conn, req, &rsp, auth);
 
 	if (rsp.auth_req & SMP_AUTH_SC) {
-		printk("Our response has SC!");
 		set_bit(SMP_FLAG_SC, &smp->flags);
 
 		if (rsp.auth_req & SMP_AUTH_CT2)
 			set_bit(SMP_FLAG_CT2, &smp->flags);
 	}
-
-	printk("Built pairing command!");
 
 	if (conn->hcon->io_capability == HCI_IO_NO_INPUT_OUTPUT)
 		sec_level = BT_SECURITY_MEDIUM;
@@ -1836,8 +1828,6 @@ static u8 smp_cmd_pairing_req(struct l2cap_conn *conn, struct sk_buff *skb)
 
 	if (sec_level > conn->hcon->pending_sec_level)
 		conn->hcon->pending_sec_level = sec_level;
-
-	printk("security level: %d", sec_level);
 
 	/* If we need MITM check that it can be achieved */
 	if (conn->hcon->pending_sec_level >= BT_SECURITY_HIGH) {
@@ -1882,8 +1872,6 @@ static u8 smp_cmd_pairing_req(struct l2cap_conn *conn, struct sk_buff *skb)
 	if (ret)
 		return SMP_UNSPECIFIED;
 
-	printk("Done! Sent a request!");
-
 	return 0;
 }
 
@@ -1892,8 +1880,6 @@ static u8 sc_send_public_key(struct smp_chan *smp)
 	struct hci_dev *hdev = smp->conn->hcon->hdev;
 
 	bt_dev_dbg(hdev, "");
-
-	printk("hola");
 
 	if (test_bit(SMP_FLAG_LOCAL_OOB, &smp->flags)) {
 		struct l2cap_chan *chan = hdev->smp_data;
@@ -1910,8 +1896,6 @@ static u8 sc_send_public_key(struct smp_chan *smp)
 		if (smp_dev->debug_key)
 			set_bit(SMP_FLAG_DEBUG_KEY, &smp->flags);
 
-		printk("first condition done and dusted, sending public key.");
-
 		goto done;
 	}
 
@@ -1924,10 +1908,8 @@ static u8 sc_send_public_key(struct smp_chan *smp)
 	} else {
 		while (true) {
 			/* Generate key pair for Secure Connections */
-			if (generate_ecdh_keys(smp->tfm_ecdh, smp->local_pk)) {
-				printk("failed to generate ecdh keys!");
+			if (generate_ecdh_keys(smp->tfm_ecdh, smp->local_pk))
 				return SMP_UNSPECIFIED;
-			}
 
 			/* This is unlikely, but we need to check that
 			 * we didn't accidentally generate a debug key.
@@ -1940,8 +1922,6 @@ static u8 sc_send_public_key(struct smp_chan *smp)
 done:
 	SMP_DBG("Local Public Key X: %32phN", smp->local_pk);
 	SMP_DBG("Local Public Key Y: %32phN", smp->local_pk + 32);
-
-	printk("sending public key to the watch!");
 
 	smp_send_cmd(smp->conn, SMP_CMD_PUBLIC_KEY, 64, smp->local_pk);
 
@@ -1958,8 +1938,6 @@ static u8 smp_cmd_pairing_rsp(struct l2cap_conn *conn, struct sk_buff *skb)
 	int ret;
 
 	bt_dev_dbg(hdev, "conn %p", conn);
-
-	printk("Got an SMP pairing response!");
 
 	if (skb->len < sizeof(*rsp))
 		return SMP_INVALID_PARAMS;
@@ -2028,13 +2006,10 @@ static u8 smp_cmd_pairing_rsp(struct l2cap_conn *conn, struct sk_buff *skb)
 	 */
 	smp->remote_key_dist &= rsp->resp_key_dist;
 
-	printk("ok this looks good?");
-
 	if (test_bit(SMP_FLAG_SC, &smp->flags)) {
 		/* Clear bits which are generated but not distributed */
 		smp->remote_key_dist &= ~SMP_SC_NO_DIST;
 		SMP_ALLOW_CMD(smp, SMP_CMD_PUBLIC_KEY);
-		printk("sending public key");
 		return sc_send_public_key(smp);
 	}
 
@@ -2045,8 +2020,6 @@ static u8 smp_cmd_pairing_rsp(struct l2cap_conn *conn, struct sk_buff *skb)
 		return SMP_UNSPECIFIED;
 
 	set_bit(SMP_FLAG_CFM_PENDING, &smp->flags);
-
-	printk("hmmmm");
 
 	/* Can't compose response until we have been confirmed */
 	if (test_bit(SMP_FLAG_TK_VALID, &smp->flags))

@@ -904,8 +904,7 @@ static int hci_rfkill_set_block(void *data, bool blocked)
 	struct hci_dev *hdev = data;
 	int err;
 
-	printk("MEOW MEOW MEOW");
-	printk("%p name %s blocked %d", hdev, hdev->name, blocked);
+	BT_DBG("%p name %s blocked %d", hdev, hdev->name, blocked);
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL))
 		return -EBUSY;
